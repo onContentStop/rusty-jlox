@@ -1,2 +1,2 @@
 [workspace]
-members = ["generate_ast", "print_ast"]
+members = ["generate_ast"]

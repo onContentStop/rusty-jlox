@@ -81,12 +81,12 @@ where
     let tokens = scanner.scan_tokens();
 
     let mut parser = Parser::new(tokens);
-    let expression = parser.parse();
+    let statements = parser.parse();
     if *HAD_ERROR.read() {
         return Ok(());
     }
     
-    INTERPRETER.lock().interpret(expression.unwrap());
+    INTERPRETER.lock().interpret(&statements.unwrap());
     Ok(())
 }
 
@@ -103,7 +103,7 @@ where
 {
     match token.kind {
         token_type::TokenType::EOF => report(token.line, " at end", message),
-        _ => report(token.line, format!("at '{}'", token.lexeme), message),
+        _ => report(token.line, format!(" at '{}'", token.lexeme), message),
     }
 }
 

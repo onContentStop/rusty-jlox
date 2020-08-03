@@ -19,6 +19,14 @@ fn main() -> Exit<i8> {
             "Literal  : Value",
             "Unary    : Token, Expr",
         ],
+        vec!["crate::token::Token", "crate::literal::Value"],
+    );
+
+    define_ast(
+        output_dir,
+        "Stmt",
+        vec!["Expression : Expr", "Print      : Expr"],
+        vec!["crate::ast::expr::Expr"],
     );
 
     Exit::Ok
@@ -38,17 +46,26 @@ struct Type {
     typed_a_list: String,
 }
 
-fn define_ast(output_dir: &str, base_name: &str, types: Vec<&'static str>) {
+fn gen_uses(uses: Vec<&'static str>) -> String {
+    use std::fmt::Write;
+    let mut s = String::new();
+    for u in uses {
+        write!(s, "use {};", u).unwrap();
+    }
+    s
+}
+
+fn define_ast(
+    output_dir: &str,
+    base_name: &str,
+    types: Vec<&'static str>,
+    uses: Vec<&'static str>,
+) {
     let path = PathBuf::from(output_dir).join(base_name.to_lowercase() + ".rs");
     let file = File::create(path).unwrap();
     let mut writer = BufWriter::new(file);
 
-    let mut contents = String::from(
-        "use crate::token::Token;
-use crate::literal::Value;
-
-",
-    );
+    let mut contents = gen_uses(uses);
 
     let type_list = TypeList {
         base: base_name.to_owned(),

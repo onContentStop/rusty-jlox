@@ -1,13 +1,17 @@
 use crate::{
-    ast::expr::{Expr, Visitor},
+    ast::{
+        expr::{self, Expr},
+        stmt,
+    },
     literal::Value,
     token::Token,
     token_type::TokenType,
 };
+use stmt::Stmt;
 
 pub struct Interpreter {}
 
-impl Visitor<Result<Value, (Token, String)>> for Interpreter {
+impl expr::Visitor<Result<Value, (Token, String)>> for Interpreter {
     fn visit_binary_expr(
         &mut self,
         a0: &Expr,
@@ -84,6 +88,17 @@ impl Visitor<Result<Value, (Token, String)>> for Interpreter {
     }
 }
 
+impl stmt::Visitor<Result<Value, (Token, String)>> for Interpreter {
+    fn visit_expression_stmt(&mut self, a0: &Expr) -> Result<Value, (Token, String)> {
+        self.evaluate(a0)
+    }
+    fn visit_print_stmt(&mut self, a0: &Expr) -> Result<Value, (Token, String)> {
+        let value = self.evaluate(a0)?;
+        println!("{}", value);
+        Ok(Value::Nil)
+    }
+}
+
 fn is_truthy(value: Value) -> bool {
     match value {
         Value::Nil => false,
@@ -129,11 +144,16 @@ impl Interpreter {
         expr.accept(self)
     }
 
-    pub fn interpret(&mut self, expression: Expr) {
-        let value = self.evaluate(&expression);
-        match value {
-            Ok(v) => println!("{}", v),
-            Err(e) => crate::runtime_error(e),
+    fn execute(&mut self, stmt: &Stmt) -> Result<Value, (Token, String)> {
+        stmt.accept(self)
+    }
+
+    pub fn interpret(&mut self, statements: &[Stmt]) {
+        for statement in statements {
+            if let Err(e) = self.execute(statement) {
+                crate::runtime_error(e);
+                break;
+            }
         }
     }
 }

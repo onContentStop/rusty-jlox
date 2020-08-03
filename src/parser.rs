@@ -1,4 +1,9 @@
-use crate::{ast::expr::Expr, literal::Value, token::Token, token_type::TokenType};
+use crate::{
+    ast::{expr::Expr, stmt::Stmt},
+    literal::Value,
+    token::Token,
+    token_type::TokenType,
+};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -10,8 +15,32 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Option<Expr> {
-        self.expression().ok()
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, ()> {
+        let mut statements: Vec<Stmt> = vec![];
+        while !self.is_at_end() {
+            statements.push(self.statement()?);
+        }
+        Ok(statements)
+    }
+
+    fn statement(&mut self) -> Result<Stmt, ()> {
+        if self.matches(vec![TokenType::PRINT]) {
+            self.print_statement()
+        } else {
+            self.expression_statement()
+        }
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, ()> {
+        let value = self.expression()?;
+        self.consume(TokenType::SEMICOLON, "Expect ';' after value.")?;
+        Ok(Stmt::Print(value))
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, ()> {
+        let expr = self.expression()?;
+        self.consume(TokenType::SEMICOLON, "Expect ';' after expression.")?;
+        Ok(Stmt::Expression(expr))
     }
 
     fn expression(&mut self) -> Result<Expr, ()> {
