@@ -1,4 +1,4 @@
-use crate::{ast::expr::Expr, literal::Literal, token::Token, token_type::TokenType};
+use crate::{ast::expr::Expr, literal::Value, token::Token, token_type::TokenType};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -88,11 +88,11 @@ impl Parser {
         use TokenType::*;
 
         if self.matches(vec![FALSE]) {
-            Ok(Expr::Literal(Literal::False))
+            Ok(Expr::Literal(Value::Bool(false)))
         } else if self.matches(vec![TRUE]) {
-            Ok(Expr::Literal(Literal::True))
+            Ok(Expr::Literal(Value::Bool(true)))
         } else if self.matches(vec![NIL]) {
-            Ok(Expr::Literal(Literal::Nil))
+            Ok(Expr::Literal(Value::Nil))
         } else if self.matches(vec![NUMBER, STRING]) {
             Ok(Expr::Literal(self.previous().literal))
         } else if self.matches(vec![LEFT_PAREN]) {

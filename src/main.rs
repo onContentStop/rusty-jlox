@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod interpreter;
 pub mod literal;
 pub mod parser;
 pub mod scanner;
@@ -7,9 +8,10 @@ pub mod token_type;
 
 use ast::printer::AstPrinter;
 use exit::Exit;
+use interpreter::Interpreter;
 use io::{BufRead, BufReader, Read, Write};
 use lazy_static::lazy_static;
-use parking_lot::RwLock;
+use parking_lot::{Mutex, RwLock};
 use parser::Parser;
 use scanner::Scanner;
 use std::{env, error::Error, fs::File, io};
@@ -17,6 +19,8 @@ use token::Token;
 
 lazy_static! {
     static ref HAD_ERROR: RwLock<bool> = RwLock::new(false);
+    static ref HAD_RUNTIME_ERROR: RwLock<bool> = RwLock::new(false);
+    static ref INTERPRETER: Mutex<Interpreter> = Mutex::new(Interpreter {});
 }
 
 fn main() -> Exit<i8> {
@@ -43,6 +47,9 @@ fn run_file(path: &str) -> Result<(), i8> {
 
     if *HAD_ERROR.read() {
         return Err(65);
+    }
+    if *HAD_RUNTIME_ERROR.read() {
+        return Err(70);
     }
     Ok(())
 }
@@ -79,7 +86,8 @@ where
     if *HAD_ERROR.read() {
         return Ok(());
     }
-    println!("{}", AstPrinter {}.print(expression.unwrap()));
+    
+    INTERPRETER.lock().interpret(expression.unwrap());
     Ok(())
 }
 
@@ -98,6 +106,11 @@ where
         token_type::TokenType::EOF => report(token.line, " at end", message),
         _ => report(token.line, format!("at '{}'", token.lexeme), message),
     }
+}
+
+fn runtime_error(error: (Token, String)) {
+    println!("{}\n[line {}]", error.1, error.0.line);
+    *HAD_RUNTIME_ERROR.write() = true;
 }
 
 fn report<S, S2>(line: usize, whence: S, message: S2)

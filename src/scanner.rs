@@ -1,4 +1,4 @@
-use crate::{literal::Literal, token::Token, token_type::TokenType};
+use crate::{literal::Value, token::Token, token_type::TokenType};
 
 fn keyword(text: &str) -> Option<TokenType> {
     match text {
@@ -61,7 +61,7 @@ impl Scanner {
         self.tokens.push(Token::new(
             TokenType::EOF,
             "".to_string(),
-            Literal::Nil,
+            Value::Nil,
             self.line,
         ));
         self.tokens.clone()
@@ -76,21 +76,21 @@ impl Scanner {
         use TokenType::*;
         match self.advance() {
             // basic tokens
-            '(' => self.add_token(LEFT_PAREN, Literal::Nil),
-            ')' => self.add_token(RIGHT_PAREN, Literal::Nil),
-            '{' => self.add_token(LEFT_BRACE, Literal::Nil),
-            '}' => self.add_token(RIGHT_BRACE, Literal::Nil),
-            ',' => self.add_token(COMMA, Literal::Nil),
-            '.' => self.add_token(DOT, Literal::Nil),
-            '-' => self.add_token(MINUS, Literal::Nil),
-            '+' => self.add_token(PLUS, Literal::Nil),
-            ';' => self.add_token(SEMICOLON, Literal::Nil),
-            '*' => self.add_token(STAR, Literal::Nil),
+            '(' => self.add_token(LEFT_PAREN, Value::Nil),
+            ')' => self.add_token(RIGHT_PAREN, Value::Nil),
+            '{' => self.add_token(LEFT_BRACE, Value::Nil),
+            '}' => self.add_token(RIGHT_BRACE, Value::Nil),
+            ',' => self.add_token(COMMA, Value::Nil),
+            '.' => self.add_token(DOT, Value::Nil),
+            '-' => self.add_token(MINUS, Value::Nil),
+            '+' => self.add_token(PLUS, Value::Nil),
+            ';' => self.add_token(SEMICOLON, Value::Nil),
+            '*' => self.add_token(STAR, Value::Nil),
 
             // two-char tokens like <=
             '!' => {
                 let kind = if self.matches('=') { BANG_EQUAL } else { BANG };
-                self.add_token(kind, Literal::Nil);
+                self.add_token(kind, Value::Nil);
             }
             '=' => {
                 let kind = if self.matches('=') {
@@ -98,11 +98,11 @@ impl Scanner {
                 } else {
                     EQUAL
                 };
-                self.add_token(kind, Literal::Nil);
+                self.add_token(kind, Value::Nil);
             }
             '<' => {
                 let kind = if self.matches('=') { LESS_EQUAL } else { LESS };
-                self.add_token(kind, Literal::Nil);
+                self.add_token(kind, Value::Nil);
             }
             '>' => {
                 let kind = if self.matches('=') {
@@ -110,7 +110,7 @@ impl Scanner {
                 } else {
                     GREATER
                 };
-                self.add_token(kind, Literal::Nil);
+                self.add_token(kind, Value::Nil);
             }
 
             // slash token, or line comment? you decide, gamers
@@ -121,7 +121,7 @@ impl Scanner {
                         self.advance();
                     }
                 } else {
-                    self.add_token(SLASH, Literal::Nil);
+                    self.add_token(SLASH, Value::Nil);
                 }
             }
 
@@ -150,7 +150,7 @@ impl Scanner {
             .iter()
             .collect::<String>();
         let kind = keyword(&text).unwrap_or(TokenType::IDENTIFIER);
-        self.add_token(kind, Literal::Nil);
+        self.add_token(kind, Value::Nil);
     }
 
     fn number(&mut self) {
@@ -171,7 +171,7 @@ impl Scanner {
 
         self.add_token(
             TokenType::NUMBER,
-            Literal::Number(
+            Value::Number(
                 self.source[self.start..self.current]
                     .iter()
                     .collect::<String>()
@@ -204,7 +204,7 @@ impl Scanner {
         let value: String = self.source[self.start + 1..self.current - 1]
             .iter()
             .collect();
-        self.add_token(TokenType::STRING, Literal::String(value));
+        self.add_token(TokenType::STRING, Value::String(value));
     }
 
     fn peek_next(&self) -> char {
@@ -244,7 +244,7 @@ impl Scanner {
     }
 
     /// We finished parsing a token!
-    fn add_token(&mut self, kind: TokenType, literal: Literal) {
+    fn add_token(&mut self, kind: TokenType, literal: Value) {
         let text: String = self.source[self.start..self.current].iter().collect();
         self.tokens.push(Token::new(kind, text, literal, self.line));
     }

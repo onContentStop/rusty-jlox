@@ -16,7 +16,7 @@ fn main() -> Exit<i8> {
         vec![
             "Binary   : Expr, Token, Expr",
             "Grouping : Expr",
-            "Literal  : Literal",
+            "Literal  : Value",
             "Unary    : Token, Expr",
         ],
     );
@@ -45,7 +45,7 @@ fn define_ast(output_dir: &str, base_name: &str, types: Vec<&'static str>) {
 
     let mut contents = String::from(
         "use crate::token::Token;
-use crate::literal::Literal;
+use crate::literal::Value;
 
 ",
     );

@@ -1,4 +1,4 @@
-use crate::{literal::Literal, token_type::TokenType};
+use crate::{literal::Value, token_type::TokenType};
 use std::fmt::Debug;
 
 /// A single token, taken straight out of the source code by the Scanner.
@@ -9,7 +9,7 @@ pub struct Token {
     /// The source code text that corresponds to this Token.
     pub lexeme: String,
     /// Literals are anything printable. Could be a numeric value or the contents of a string.
-    pub literal: Literal,
+    pub literal: Value,
     /// The line that this token was found on in the source code
     pub line: usize,
 }
@@ -28,7 +28,7 @@ impl Clone for Token {
 }
 
 impl Token {
-    pub fn new(kind: TokenType, lexeme: String, literal: Literal, line: usize) -> Self {
+    pub fn new(kind: TokenType, lexeme: String, literal: Value, line: usize) -> Self {
         Self {
             kind,
             lexeme,
@@ -41,7 +41,7 @@ impl Token {
 impl ToString for Token {
     fn to_string(&self) -> String {
         match &self.literal {
-            Literal::Nil => format!("{} {}", self.kind, self.lexeme),
+            Value::Nil => format!("{} {}", self.kind, self.lexeme),
             _ => format!("{} {} {}", self.kind, self.lexeme, self.literal),
         }
     }
