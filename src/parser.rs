@@ -151,6 +151,8 @@ impl Parser {
         self.tokens[self.current - 1].clone()
     }
 
+    // TODO when the parser supports statements, use this function somewhere
+    #[allow(dead_code)]
     fn synchronize(&mut self) {
         self.advance();
 

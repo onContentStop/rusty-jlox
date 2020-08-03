@@ -6,7 +6,6 @@ pub mod scanner;
 pub mod token;
 pub mod token_type;
 
-use ast::printer::AstPrinter;
 use exit::Exit;
 use interpreter::Interpreter;
 use io::{BufRead, BufReader, Read, Write};

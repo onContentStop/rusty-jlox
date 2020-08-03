@@ -13,7 +13,7 @@ impl expr::Visitor<String> for AstPrinter {
     fn visit_literal_expr(&mut self, a0: &Value) -> String {
         match a0 {
             Value::Nil => String::from("nil"),
-            Value::String(s) => format!("{}", s),
+            Value::String(s) => s.to_string(),
             Value::Number(n) => format!("{}", n),
             Value::Bool(true) => String::from("true"),
             Value::Bool(false) => String::from("false"),
