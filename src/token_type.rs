@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
     LEFT_PAREN,

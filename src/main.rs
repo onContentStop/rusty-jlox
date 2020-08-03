@@ -1,15 +1,19 @@
 pub mod ast;
 pub mod literal;
+pub mod parser;
 pub mod scanner;
 pub mod token;
 pub mod token_type;
 
+use ast::printer::AstPrinter;
 use exit::Exit;
 use io::{BufRead, BufReader, Read, Write};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
+use parser::Parser;
 use scanner::Scanner;
 use std::{env, error::Error, fs::File, io};
+use token::Token;
 
 lazy_static! {
     static ref HAD_ERROR: RwLock<bool> = RwLock::new(false);
@@ -70,9 +74,12 @@ where
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens();
 
-    for token in tokens {
-        println!("{}", token.to_string());
+    let mut parser = Parser::new(tokens);
+    let expression = parser.parse();
+    if *HAD_ERROR.read() {
+        return Ok(());
     }
+    println!("{}", AstPrinter {}.print(expression.unwrap()));
     Ok(())
 }
 
@@ -81,6 +88,16 @@ where
     S: AsRef<str>,
 {
     report(line, "", message.as_ref())
+}
+
+fn error_token<S>(token: Token, message: S)
+where
+    S: AsRef<str>,
+{
+    match token.kind {
+        token_type::TokenType::EOF => report(token.line, " at end", message),
+        _ => report(token.line, format!("at '{}'", token.lexeme), message),
+    }
 }
 
 fn report<S, S2>(line: usize, whence: S, message: S2)

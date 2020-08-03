@@ -5,6 +5,8 @@ pub enum Literal {
     Nil,
     String(String),
     Number(f64),
+    True,
+    False,
 }
 
 impl Display for Literal {
@@ -13,6 +15,8 @@ impl Display for Literal {
             Literal::Nil => write!(f, ""),
             Literal::String(s) => write!(f, "{}", s),
             Literal::Number(n) => write!(f, "{}", n),
+            Literal::True => write!(f, "true"),
+            Literal::False => write!(f, "false"),
         }
     }
 }
