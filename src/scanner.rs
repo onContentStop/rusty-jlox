@@ -1,5 +1,4 @@
-use crate::{token::Token, token_type::TokenType};
-use std::{fmt::Display, sync::Arc};
+use crate::{literal::Literal, token::Token, token_type::TokenType};
 
 fn keyword(text: &str) -> Option<TokenType> {
     match text {
@@ -59,8 +58,12 @@ impl Scanner {
             self.scan_token();
         }
 
-        self.tokens
-            .push(Token::new(TokenType::EOF, "".to_string(), None, self.line));
+        self.tokens.push(Token::new(
+            TokenType::EOF,
+            "".to_string(),
+            Literal::Nil,
+            self.line,
+        ));
         self.tokens.clone()
     }
 
@@ -73,21 +76,21 @@ impl Scanner {
         use TokenType::*;
         match self.advance() {
             // basic tokens
-            '(' => self.add_token(LEFT_PAREN, None),
-            ')' => self.add_token(RIGHT_PAREN, None),
-            '{' => self.add_token(LEFT_BRACE, None),
-            '}' => self.add_token(RIGHT_BRACE, None),
-            ',' => self.add_token(COMMA, None),
-            '.' => self.add_token(DOT, None),
-            '-' => self.add_token(MINUS, None),
-            '+' => self.add_token(PLUS, None),
-            ';' => self.add_token(SEMICOLON, None),
-            '*' => self.add_token(STAR, None),
+            '(' => self.add_token(LEFT_PAREN, Literal::Nil),
+            ')' => self.add_token(RIGHT_PAREN, Literal::Nil),
+            '{' => self.add_token(LEFT_BRACE, Literal::Nil),
+            '}' => self.add_token(RIGHT_BRACE, Literal::Nil),
+            ',' => self.add_token(COMMA, Literal::Nil),
+            '.' => self.add_token(DOT, Literal::Nil),
+            '-' => self.add_token(MINUS, Literal::Nil),
+            '+' => self.add_token(PLUS, Literal::Nil),
+            ';' => self.add_token(SEMICOLON, Literal::Nil),
+            '*' => self.add_token(STAR, Literal::Nil),
 
             // two-char tokens like <=
             '!' => {
                 let kind = if self.matches('=') { BANG_EQUAL } else { BANG };
-                self.add_token(kind, None);
+                self.add_token(kind, Literal::Nil);
             }
             '=' => {
                 let kind = if self.matches('=') {
@@ -95,11 +98,11 @@ impl Scanner {
                 } else {
                     EQUAL
                 };
-                self.add_token(kind, None);
+                self.add_token(kind, Literal::Nil);
             }
             '<' => {
                 let kind = if self.matches('=') { LESS_EQUAL } else { LESS };
-                self.add_token(kind, None);
+                self.add_token(kind, Literal::Nil);
             }
             '>' => {
                 let kind = if self.matches('=') {
@@ -107,7 +110,7 @@ impl Scanner {
                 } else {
                     GREATER
                 };
-                self.add_token(kind, None);
+                self.add_token(kind, Literal::Nil);
             }
 
             // slash token, or line comment? you decide, gamers
@@ -118,7 +121,7 @@ impl Scanner {
                         self.advance();
                     }
                 } else {
-                    self.add_token(SLASH, None);
+                    self.add_token(SLASH, Literal::Nil);
                 }
             }
 
@@ -147,7 +150,7 @@ impl Scanner {
             .iter()
             .collect::<String>();
         let kind = keyword(&text).unwrap_or(TokenType::IDENTIFIER);
-        self.add_token(kind, None);
+        self.add_token(kind, Literal::Nil);
     }
 
     fn number(&mut self) {
@@ -168,14 +171,14 @@ impl Scanner {
 
         self.add_token(
             TokenType::NUMBER,
-            Some(Arc::new(
+            Literal::Number(
                 self.source[self.start..self.current]
                     .iter()
                     .collect::<String>()
                     .parse::<f64>()
                     // it'll parse for sure, we already validated it
                     .expect("Oh god oh fuck"),
-            )),
+            ),
         );
     }
 
@@ -201,7 +204,7 @@ impl Scanner {
         let value: String = self.source[self.start + 1..self.current - 1]
             .iter()
             .collect();
-        self.add_token(TokenType::STRING, Some(Arc::new(value)));
+        self.add_token(TokenType::STRING, Literal::String(value));
     }
 
     fn peek_next(&self) -> char {
@@ -241,7 +244,7 @@ impl Scanner {
     }
 
     /// We finished parsing a token!
-    fn add_token(&mut self, kind: TokenType, literal: Option<Arc<dyn Display>>) {
+    fn add_token(&mut self, kind: TokenType, literal: Literal) {
         let text: String = self.source[self.start..self.current].iter().collect();
         self.tokens.push(Token::new(kind, text, literal, self.line));
     }

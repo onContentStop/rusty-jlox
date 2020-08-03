@@ -1,7 +1,5 @@
 use exit::Exit;
-use std::process::Command;
-use std::process::Stdio;
-use std::{env, fs::File, io::BufReader, io::BufWriter, io::Read, path::PathBuf};
+use std::{env, fs::File, io::BufWriter, path::PathBuf};
 use subprocess::{Popen, PopenConfig, Redirection};
 
 fn main() -> Exit<i8> {
@@ -18,7 +16,7 @@ fn main() -> Exit<i8> {
         vec![
             "Binary   : Expr, Token, Expr",
             "Grouping : Expr",
-            "Literal  : Option<Arc<dyn Display>>",
+            "Literal  : Literal",
             "Unary    : Token, Expr",
         ],
     );
@@ -46,9 +44,8 @@ fn define_ast(output_dir: &str, base_name: &str, types: Vec<&'static str>) {
     let mut writer = BufWriter::new(file);
 
     let mut contents = String::from(
-        "use std::sync::Arc;
-use std::fmt::Display;
-use crate::token::Token;
+        "use crate::token::Token;
+use crate::literal::Literal;
 
 ",
     );
@@ -83,13 +80,13 @@ use crate::token::Token;
             .collect(),
     };
 
-    contents.push_str(&format!("pub enum {} {{", type_list.base));
+    contents.push_str(&format!("#[derive(Debug)]pub enum {} {{", type_list.base));
     for ty in &type_list.types {
         contents.push_str(&format!("{}(", ty.name));
         for field in &ty.fields {
             if field == &type_list.base {
                 use std::fmt::Write;
-                write!(contents, "Box<{}>,", field);
+                write!(contents, "Box<{}>,", field).unwrap();
             } else {
                 contents.push_str(&format!("{},", field));
             }
@@ -102,7 +99,6 @@ use crate::token::Token;
     contents.push_str("pub fn accept<R, V: Visitor<R>>(&self, visitor: &mut V) -> R {");
     contents.push_str("match self {");
     for ty in &type_list.types {
-        let mut a: usize = 0;
         contents.push_str(&format!("{}::{}(", type_list.base, ty.name));
         contents.push_str(&ty.a_list);
         contents.push_str(&format!(
@@ -132,7 +128,7 @@ use crate::token::Token;
 }
 
 fn run_rustfmt_on(s: String) -> String {
-    let (out, err) = Popen::create(
+    let (out, _err) = Popen::create(
         &["rustfmt"],
         PopenConfig {
             stdout: Redirection::Pipe,

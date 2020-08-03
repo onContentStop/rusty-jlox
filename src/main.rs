@@ -1,7 +1,8 @@
 pub mod ast;
-mod scanner;
+pub mod literal;
+pub mod scanner;
 pub mod token;
-mod token_type;
+pub mod token_type;
 
 use exit::Exit;
 use io::{BufRead, BufReader, Read, Write};

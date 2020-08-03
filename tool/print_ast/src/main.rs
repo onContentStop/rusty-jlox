@@ -1,5 +1,5 @@
-use jlox::{ast::expr, token::Token};
-use expr::Expr;
+use jlox::expr;
+use jlox::expr::Expr;
 use std::{fmt::Display, sync::Arc};
 
 pub struct AstPrinter {}
@@ -32,7 +32,21 @@ impl AstPrinter {
         }
         s
     }
+
+    fn print(&mut self, expr: Expr) -> String {
+        expr.accept(self)
+    }
 }
 
 fn main() {
+    let expression = Expr::Binary(
+        Expr::Unary(
+            Token::new(TokenType::Minus, "-", None, 1),
+            Expr::Literal(Some(Arc::new(123))),
+        ),
+        Token::new(TokenType::Star, "*", None, 1),
+        Expr::Grouping(Expr::Literal(Some(Arc::new(45.67)))),
+    );
+
+    println!("{}", AstPrinter {}.print(expression))
 }

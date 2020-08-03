@@ -1,11 +1,11 @@
+use crate::literal::Literal;
 use crate::token::Token;
-use std::fmt::Display;
-use std::sync::Arc;
 
+#[derive(Debug)]
 pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
-    Literal(Option<Arc<dyn Display>>),
+    Literal(Literal),
     Unary(Token, Box<Expr>),
 }
 impl Expr {
@@ -21,6 +21,6 @@ impl Expr {
 pub trait Visitor<R> {
     fn visit_binary_expr(&mut self, a0: &Expr, a1: &Token, a2: &Expr) -> R;
     fn visit_grouping_expr(&mut self, a0: &Expr) -> R;
-    fn visit_literal_expr(&mut self, a0: &Option<Arc<dyn Display>>) -> R;
+    fn visit_literal_expr(&mut self, a0: &Literal) -> R;
     fn visit_unary_expr(&mut self, a0: &Token, a1: &Expr) -> R;
 }
