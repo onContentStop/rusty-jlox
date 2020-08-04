@@ -22,6 +22,12 @@ impl expr::Visitor<String> for AstPrinter {
     fn visit_unary_expr(&mut self, a0: &Token, a1: &Expr) -> String {
         self.parenthesize(&a0.lexeme, vec![a1])
     }
+    fn visit_variable_expr(&mut self, a0: &Token) -> String {
+        format!("{}", a0.lexeme)
+    }
+    fn visit_assign_expr(&mut self, a0: &Token, a1: &Expr) -> String {
+        todo!()
+    }
 }
 
 impl AstPrinter {

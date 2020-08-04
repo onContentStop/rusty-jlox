@@ -18,9 +18,40 @@ impl Parser {
     pub fn parse(&mut self) -> Result<Vec<Stmt>, ()> {
         let mut statements: Vec<Stmt> = vec![];
         while !self.is_at_end() {
-            statements.push(self.statement()?);
+            statements.push(self.declaration()?);
         }
         Ok(statements)
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, ()> {
+        let res = {
+            if self.matches(vec![TokenType::VAR]) {
+                self.var_declaration()
+            } else {
+                self.statement()
+            }
+        };
+        if res.is_ok() {
+            res
+        } else {
+            self.synchronize();
+            Err(())
+        }
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, ()> {
+        let name = self.consume(TokenType::IDENTIFIER, "Expect variable name.")?;
+
+        let mut initializer: Option<Expr> = None;
+        if self.matches(vec![TokenType::EQUAL]) {
+            initializer = Some(self.expression()?);
+        }
+
+        self.consume(
+            TokenType::SEMICOLON,
+            "Expect ';' after variable declaration.",
+        )?;
+        Ok(Stmt::Var(name, initializer))
     }
 
     fn statement(&mut self) -> Result<Stmt, ()> {
@@ -44,7 +75,24 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, ()> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, ()> {
+        let expr = self.equality()?;
+
+        if self.matches(vec![TokenType::EQUAL]) {
+            let equals = self.previous();
+            let value = self.assignment()?;
+
+            if let Expr::Variable(name) = expr {
+                return Ok(Expr::Assign(name, Box::new(value)));
+            }
+
+            crate::error_token(equals, "Invalid assignment target.");
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expr, ()> {
@@ -124,6 +172,8 @@ impl Parser {
             Ok(Expr::Literal(Value::Nil))
         } else if self.matches(vec![NUMBER, STRING]) {
             Ok(Expr::Literal(self.previous().literal))
+        } else if self.matches(vec![IDENTIFIER]) {
+            Ok(Expr::Variable(self.previous()))
         } else if self.matches(vec![LEFT_PAREN]) {
             let expr = self.expression()?;
             self.consume(RIGHT_PAREN, "Expect ')' after expression.")?;
@@ -180,8 +230,6 @@ impl Parser {
         self.tokens[self.current - 1].clone()
     }
 
-    // TODO when the parser supports statements, use this function somewhere
-    #[allow(dead_code)]
     fn synchronize(&mut self) {
         self.advance();
 

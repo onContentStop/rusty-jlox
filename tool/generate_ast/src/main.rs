@@ -14,10 +14,12 @@ fn main() -> Exit<i8> {
         output_dir,
         "Expr",
         vec![
+            "Assign   : Token, Expr",
             "Binary   : Expr, Token, Expr",
             "Grouping : Expr",
             "Literal  : Value",
             "Unary    : Token, Expr",
+            "Variable : Token",
         ],
         vec!["crate::token::Token", "crate::literal::Value"],
     );
@@ -25,8 +27,12 @@ fn main() -> Exit<i8> {
     define_ast(
         output_dir,
         "Stmt",
-        vec!["Expression : Expr", "Print      : Expr"],
-        vec!["crate::ast::expr::Expr"],
+        vec![
+            "Expression : Expr",
+            "Print      : Expr",
+            "Var        : Token, Option<Expr>",
+        ],
+        vec!["crate::ast::expr::Expr", "crate::token::Token"],
     );
 
     Exit::Ok

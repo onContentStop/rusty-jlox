@@ -3,15 +3,18 @@ use crate::{
         expr::{self, Expr},
         stmt,
     },
+    environment::Environment,
     literal::Value,
     token::Token,
     token_type::TokenType,
 };
 use stmt::Stmt;
 
-pub struct Interpreter {}
+pub struct Interpreter<'i> {
+    environment: Environment<'i>,
+}
 
-impl expr::Visitor<Result<Value, (Token, String)>> for Interpreter {
+impl<'i> expr::Visitor<Result<Value, (Token, String)>> for Interpreter<'i> {
     fn visit_binary_expr(
         &mut self,
         a0: &Expr,
@@ -86,15 +89,34 @@ impl expr::Visitor<Result<Value, (Token, String)>> for Interpreter {
             _ => unreachable!(),
         }
     }
+    fn visit_assign_expr(&mut self, a0: &Token, a1: &Expr) -> Result<Value, (Token, String)> {
+        let value = self.evaluate(a1)?;
+
+        self.environment.assign(a0, &value)?;
+        Ok(value)
+    }
+    fn visit_variable_expr(&mut self, a0: &Token) -> Result<Value, (Token, String)> {
+        self.environment.get(a0)
+    }
 }
 
-impl stmt::Visitor<Result<Value, (Token, String)>> for Interpreter {
+impl<'i> stmt::Visitor<Result<Value, (Token, String)>> for Interpreter<'i> {
     fn visit_expression_stmt(&mut self, a0: &Expr) -> Result<Value, (Token, String)> {
         self.evaluate(a0)
     }
     fn visit_print_stmt(&mut self, a0: &Expr) -> Result<Value, (Token, String)> {
         let value = self.evaluate(a0)?;
         println!("{}", value);
+        Ok(Value::Nil)
+    }
+    fn visit_var_stmt(&mut self, a0: &Token, a1: &Option<Expr>) -> Result<Value, (Token, String)> {
+        let mut value = Value::Nil;
+        if let Some(initializer) = a1 {
+            value = self.evaluate(initializer)?;
+        }
+
+        self.environment.define(&a0.lexeme, value);
+        // returns nil here because assignment is a statement with no value
         Ok(Value::Nil)
     }
 }
@@ -139,7 +161,13 @@ fn check_number_operands(operator: &Token, v: &Value, w: &Value) -> Result<(), (
     }
 }
 
-impl Interpreter {
+impl<'i> Interpreter<'i> {
+    pub fn new() -> Self {
+        Self {
+            environment: Environment::new(None),
+        }
+    }
+
     fn evaluate(&mut self, expr: &Expr) -> Result<Value, (Token, String)> {
         expr.accept(self)
     }
@@ -155,5 +183,11 @@ impl Interpreter {
                 break;
             }
         }
+    }
+}
+
+impl<'i> Default for Interpreter<'i> {
+    fn default() -> Self {
+        Self::new()
     }
 }

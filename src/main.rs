@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod environment;
 pub mod interpreter;
 pub mod literal;
 pub mod parser;
@@ -19,7 +20,7 @@ use token::Token;
 lazy_static! {
     static ref HAD_ERROR: RwLock<bool> = RwLock::new(false);
     static ref HAD_RUNTIME_ERROR: RwLock<bool> = RwLock::new(false);
-    static ref INTERPRETER: Mutex<Interpreter> = Mutex::new(Interpreter {});
+    static ref INTERPRETER: Mutex<Interpreter<'static>> = Mutex::new(Interpreter::new());
 }
 
 fn main() -> Exit<i8> {
@@ -85,7 +86,7 @@ where
     if *HAD_ERROR.read() {
         return Ok(());
     }
-    
+
     INTERPRETER.lock().interpret(&statements.unwrap());
     Ok(())
 }
